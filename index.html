@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicStore - Jual Beli Alat Musik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Page transitions */
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Enhanced product cards */
+        .product-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            border-color: rgba(147, 51, 234, 0.2);
+        }
+        
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        /* Better animations */
+        .cart-badge {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0) translateY(0); }
+            50% { transform: scale(1.3) translateY(-15px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        
+        /* Enhanced buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Improved form styling */
+        .form-input {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        .form-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            border-left: 4px solid #10b981;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        /* Navigation active state */
+        .nav-link.active {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%) !important;
+            color: white !important;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+        
+        .nav-link.active .nav-underline {
+            width: 75% !important;
+        }
+        
+        /* Floating Particles */
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: linear-gradient(45deg, #8b5cf6, #ec4899);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float-up 15s infinite linear;
+        }
+        
+        .particle:nth-child(odd) {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+        }
+        
+        @keyframes float-up {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.1;
+            }
+            90% {
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Mobile responsiveness improvements */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem !important;
+            }
+            .hero-subtitle {
+                font-size: 1.1rem !important;
+            }
+        }
+        
+        /* Carousel Styles */
+        .carousel-slide {
+            display: none;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease-in-out;
+            padding: 2rem 0;
+        }
+        
+        .carousel-slide.active {
+            display: block;
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .carousel-slide.prev {
+            transform: translateX(-100%);
+        }
+        
+        .carousel-dot.active {
+            opacity: 1 !important;
+            background-color: white;
+        }
+        
+        /* Running Text Animation */
+        .running-text {
+            display: inline-block;
+            animation: scroll-left 30s linear infinite;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        
+        /* Pause animation on hover */
+        .running-text:hover {
+            animation-play-state: paused;
+        }
+
+        /* Musical Notes Animation */
+        .musical-note {
+            position: absolute;
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .floating-note {
+            animation: floatAcross 12s linear infinite;
+        }
+        
+        .bouncing-note {
+            animation: bounceFloat 8s ease-in-out infinite;
+        }
+        
+        .spinning-note {
+            animation: spinFloat 10s linear infinite;
+        }
+        
+        .wave-note {
+            animation: waveMotion 15s ease-in-out infinite;
+        }
+        
+        .note-1 {
+            top: 15%;
+            left: -10%;
+            animation-delay: 0s;
+            font-size: 3rem;
+        }
+        
+        .note-2 {
+            top: 25%;
+            left: -10%;
+            animation-delay: 3s;
+            font-size: 2rem;
+        }
+        
+        .note-3 {
+            top: 45%;
+            left: -10%;
+            animation-delay: 6s;
+            font-size: 2.5rem;
+        }
+        
+        .note-4 {
+            top: 65%;
+            left: -10%;
+            animation-delay: 9s;
+            font-size: 2.2rem;
+        }
+        
+        .note-5 {
+            top: 35%;
+            left: -10%;
+            animation-delay: 1.5s;
+            font-size: 1.8rem;
+        }
+        
+        .note-6 {
+            top: 55%;
+            left: -10%;
+            animation-delay: 4.5s;
+            font-size: 2.8rem;
+        }
+        
+        .note-7 {
+            top: 75%;
+            left: -10%;
+            animation-delay: 7.5s;
+            font-size: 2.3rem;
+        }
+        
+        .note-8 {
+            top: 85%;
+            left: -10%;
+            animation-delay: 10.5s;
+            font-size: 2rem;
+        }
+        
+        .note-9 {
+            top: 5%;
+            left: -10%;
+            animation-delay: 2s;
+            font-size: 2.7rem;
+        }
+        
+        .note-10 {
+            top: 95%;
+            left: -10%;
+            animation-delay: 5s;
+            font-size: 2.1rem;
+        }
+        
+        /* Bouncing notes for background */
+        .bg-note-1 {
+            top: 20%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+        
+        .bg-note-2 {
+            top: 70%;
+            right: 20%;
+            animation-delay: 2s;
+        }
+        
+        .bg-note-3 {
+            top: 40%;
+            left: 80%;
+            animation-delay: 4s;
+        }
+        
+        .bg-note-4 {
+            top: 80%;
+            left: 60%;
+            animation-delay: 6s;
+        }
+        
+        .bg-note-5 {
+            top: 10%;
+            right: 40%;
+            animation-delay: 1s;
+        }
+        
+        .bg-note-6 {
+            top: 60%;
+            left: 25%;
+            animation-delay: 3s;
+        }
+        
+        @keyframes floatAcross {
+            0% {
+                transform: translateX(0) translateY(0) rotate(0deg) scale(0.8);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateX(50vw) translateY(-20px) rotate(180deg) scale(1.2);
+                opacity: 0.2;
+            }
+            90% {
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateX(110vw) translateY(-40px) rotate(360deg) scale(0.6);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes bounceFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg) scale(1);
+                opacity: 0.1;
+            }
+            25% {
+                transform: translateY(-30px) rotate(90deg) scale(1.1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateY(-15px) rotate(180deg) scale(0.9);
+                opacity: 0.2;
+            }
+            75% {
+                transform: translateY(-45px) rotate(270deg) scale(1.2);
+                opacity: 0.4;
+            }
+        }
+        
+        @keyframes spinFloat {
+            0% {
+                transform: rotate(0deg) scale(1) translateY(0);
+                opacity: 0.1;
+            }
+            25% {
+                transform: rotate(90deg) scale(1.3) translateY(-20px);
+                opacity: 0.3;
+            }
+            50% {
+                transform: rotate(180deg) scale(0.8) translateY(-10px);
+                opacity: 0.2;
+            }
+            75% {
+                transform: rotate(270deg) scale(1.1) translateY(-30px);
+                opacity: 0.4;
+            }
+            100% {
+                transform: rotate(360deg) scale(1) translateY(0);
+                opacity: 0.1;
+            }
+        }
+        
+        @keyframes waveMotion {
+            0%, 100% {
+                transform: translateX(0) translateY(0) rotate(0deg);
+                opacity: 0.1;
+            }
+            25% {
+                transform: translateX(20px) translateY(-25px) rotate(45deg);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateX(-15px) translateY(-40px) rotate(90deg);
+                opacity: 0.2;
+            }
+            75% {
+                transform: translateX(25px) translateY(-15px) rotate(135deg);
+                opacity: 0.4;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 min-h-screen relative">
+    <!-- Floating Particles Background -->
+    <div class="floating-particles">
+        <div class="particle" style="left: 10%; width: 4px; height: 4px; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; width: 6px; height: 6px; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 30%; width: 3px; height: 3px; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 40%; width: 5px; height: 5px; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 50%; width: 4px; height: 4px; animation-delay: 8s;"></div>
+        <div class="particle" style="left: 60%; width: 7px; height: 7px; animation-delay: 10s;"></div>
+        <div class="particle" style="left: 70%; width: 3px; height: 3px; animation-delay: 12s;"></div>
+        <div class="particle" style="left: 80%; width: 5px; height: 5px; animation-delay: 14s;"></div>
+        <div class="particle" style="left: 90%; width: 4px; height: 4px; animation-delay: 16s;"></div>
+        <div class="particle" style="left: 15%; width: 6px; height: 6px; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 25%; width: 4px; height: 4px; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 35%; width: 5px; height: 5px; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 45%; width: 3px; height: 3px; animation-delay: 7s;"></div>
+        <div class="particle" style="left: 55%; width: 6px; height: 6px; animation-delay: 9s;"></div>
+        <div class="particle" style="left: 65%; width: 4px; height: 4px; animation-delay: 11s;"></div>
+        <div class="particle" style="left: 75%; width: 5px; height: 5px; animation-delay: 13s;"></div>
+        <div class="particle" style="left: 85%; width: 3px; height: 3px; animation-delay: 15s;"></div>
+        <div class="particle" style="left: 95%; width: 4px; height: 4px; animation-delay: 17s;"></div>
+    </div>
+    <!-- Running Text Banner -->
+    <div class="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 text-white py-2 overflow-hidden relative">
+        <div class="running-text whitespace-nowrap">
+            🎵 SELAMAT DATANG DI MUSICSTORE! ✨ Dapatkan DISKON 20% untuk pembelian pertama! 🎸 Gratis ongkir seluruh Indonesia! 🎹 Garansi resmi semua produk! 🥁 Konsultasi gratis dengan ahli musik! 🎵 SELAMAT DATANG DI MUSICSTORE! ✨ Dapatkan DISKON 20% untuk pembelian pertama! 🎸 Gratis ongkir seluruh Indonesia! 🎹 Garansi resmi semua produk! 🥁 Konsultasi gratis dengan ahli musik!
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-purple-100">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="text-3xl animate-bounce">🎵</div>
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">MusicStore</h1>
+                    <div class="hidden sm:flex items-center space-x-1 bg-gradient-to-r from-purple-100 to-pink-100 px-3 py-1 rounded-full">
+                        <span class="text-xs font-semibold text-purple-600">✨ Premium Quality</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <nav class="hidden md:flex space-x-2">
+                        <a href="#beranda" onclick="navigateTo('beranda')" class="nav-link px-4 py-2 rounded-xl text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 font-semibold transition-all duration-300 relative group">
+                            🏠 Beranda
+                            <span class="nav-underline absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 transition-all group-hover:w-3/4"></span>
+                        </a>
+                        <a href="#produk" onclick="navigateTo('produk')" class="nav-link px-4 py-2 rounded-xl text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 font-semibold transition-all duration-300 relative group">
+                            🛍️ Produk
+                            <span class="nav-underline absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 transition-all group-hover:w-3/4"></span>
+                        </a>
+                        <a href="#tentang" onclick="navigateTo('tentang')" class="nav-link px-4 py-2 rounded-xl text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 font-semibold transition-all duration-300 relative group">
+                            ℹ️ Tentang
+                            <span class="nav-underline absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 transition-all group-hover:w-3/4"></span>
+                        </a>
+                    </nav>
+                    <button onclick="toggleCart()" class="relative btn-primary text-white px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-lg hover:shadow-purple-500/25 hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                        <span class="text-lg">🛒</span>
+                        <span class="hidden sm:inline">Keranjang</span>
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center cart-badge hidden animate-pulse shadow-lg">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Beranda Page -->
+    <div id="beranda" class="page active">
+        <!-- Hero Section with Carousel -->
+        <section class="relative py-24 text-white overflow-hidden transition-all duration-1000 shadow-2xl" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); backdrop-filter: blur(10px);">
+            <!-- Animated Background Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-transparent to-pink-600/20 animate-pulse"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.05) 0%, transparent 50%);"></div>
+            <!-- Animated Musical Notes Background -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <!-- Floating notes that move across screen -->
+                <div class="musical-note floating-note note-1">♪</div>
+                <div class="musical-note floating-note note-2">♫</div>
+                <div class="musical-note floating-note note-3">♬</div>
+                <div class="musical-note floating-note note-4">♩</div>
+                <div class="musical-note floating-note note-5">♪</div>
+                <div class="musical-note floating-note note-6">♫</div>
+                <div class="musical-note floating-note note-7">♬</div>
+                <div class="musical-note floating-note note-8">♩</div>
+                <div class="musical-note floating-note note-9">♪</div>
+                <div class="musical-note floating-note note-10">♫</div>
+                
+                <!-- Background bouncing notes -->
+                <div class="musical-note bouncing-note bg-note-1">♪</div>
+                <div class="musical-note spinning-note bg-note-2">♫</div>
+                <div class="musical-note wave-note bg-note-3">♬</div>
+                <div class="musical-note bouncing-note bg-note-4">♩</div>
+                <div class="musical-note spinning-note bg-note-5">♪</div>
+                <div class="musical-note wave-note bg-note-6">♫</div>
+            </div>
+            
+            <!-- Carousel Container -->
+            <div class="relative container mx-auto px-4">
+                <div class="carousel-container relative overflow-hidden rounded-lg">
+                    <!-- Slide 1 -->
+                    <div class="carousel-slide active text-center">
+                        <h2 class="hero-title text-5xl font-bold mb-6 animate-fade-in">🎸 Temukan Alat Musik Impian Anda</h2>
+                        <p class="hero-subtitle text-xl mb-8 max-w-2xl mx-auto opacity-90 leading-relaxed">Koleksi lengkap alat musik berkualitas tinggi dengan harga terjangkau. Dari gitar hingga keyboard, semua ada di sini!</p>
+                        <button onclick="navigateTo('produk')" class="bg-white/95 backdrop-blur-sm text-purple-600 px-10 py-4 rounded-2xl font-bold hover:bg-white hover:scale-110 transition-all duration-300 shadow-2xl hover:shadow-white/25 border border-white/20 group">
+                            <span class="flex items-center space-x-2">
+                                <span class="text-xl group-hover:animate-bounce">✨</span>
+                                <span>Lihat Produk</span>
+                                <span class="text-lg group-hover:translate-x-1 transition-transform">→</span>
+                            </span>
+                        </button>
+                    </div>
+                    
+                    <!-- Slide 2 -->
+                    <div class="carousel-slide text-center">
+                        <h2 class="hero-title text-5xl font-bold mb-6">🎹 Kualitas Premium, Harga Terjangkau</h2>
+                        <p class="hero-subtitle text-xl mb-8 max-w-2xl mx-auto opacity-90 leading-relaxed">Dapatkan alat musik berkualitas internasional dengan garansi resmi dan layanan purna jual terbaik di Indonesia!</p>
+                        <button onclick="navigateTo('produk'); setTimeout(() => filterProducts('keyboard'), 100)" class="bg-white/95 backdrop-blur-sm text-purple-600 px-10 py-4 rounded-2xl font-bold hover:bg-white hover:scale-110 transition-all duration-300 shadow-2xl hover:shadow-white/25 border border-white/20 group">
+                            <span class="flex items-center space-x-2">
+                                <span class="text-xl group-hover:animate-bounce">🎹</span>
+                                <span>Lihat Keyboard</span>
+                                <span class="text-lg group-hover:translate-x-1 transition-transform">→</span>
+                            </span>
+                        </button>
+                    </div>
+                    
+                    <!-- Slide 3 -->
+                    <div class="carousel-slide text-center">
+                        <h2 class="hero-title text-5xl font-bold mb-6">🥁 Mulai Perjalanan Musik Anda</h2>
+                        <p class="hero-subtitle text-xl mb-8 max-w-2xl mx-auto opacity-90 leading-relaxed">Dari pemula hingga profesional, kami memiliki alat musik yang tepat untuk setiap level. Gratis konsultasi dengan ahli musik!</p>
+                        <button onclick="navigateTo('produk'); setTimeout(() => filterProducts('drum'), 100)" class="bg-white/95 backdrop-blur-sm text-purple-600 px-10 py-4 rounded-2xl font-bold hover:bg-white hover:scale-110 transition-all duration-300 shadow-2xl hover:shadow-white/25 border border-white/20 group">
+                            <span class="flex items-center space-x-2">
+                                <span class="text-xl group-hover:animate-bounce">🥁</span>
+                                <span>Lihat Drum Set</span>
+                                <span class="text-lg group-hover:translate-x-1 transition-transform">→</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Carousel Navigation -->
+                <div class="flex justify-center mt-10 space-x-3">
+                    <button onclick="changeSlide(0)" class="carousel-dot active w-4 h-4 rounded-full bg-white/60 hover:bg-white hover:scale-125 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/30"></button>
+                    <button onclick="changeSlide(1)" class="carousel-dot w-4 h-4 rounded-full bg-white/60 hover:bg-white hover:scale-125 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/30"></button>
+                    <button onclick="changeSlide(2)" class="carousel-dot w-4 h-4 rounded-full bg-white/60 hover:bg-white hover:scale-125 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/30"></button>
+                </div>
+                
+                <!-- Carousel Arrows -->
+                <button onclick="prevSlide()" class="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white p-4 rounded-full transition-all duration-300 hover:scale-110 shadow-lg border border-white/30 group">
+                    <span class="text-xl font-bold group-hover:-translate-x-0.5 transition-transform">‹</span>
+                </button>
+                <button onclick="nextSlide()" class="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white p-4 rounded-full transition-all duration-300 hover:scale-110 shadow-lg border border-white/30 group">
+                    <span class="text-xl font-bold group-hover:translate-x-0.5 transition-transform">›</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-20 bg-gradient-to-b from-white via-purple-50/30 to-pink-50/30 relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-100/20 via-transparent to-pink-100/20"></div>
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Mengapa Memilih MusicStore?</h2>
+                    <p class="text-gray-600 text-lg max-w-2xl mx-auto">Kami berkomitmen memberikan pengalaman berbelanja alat musik terbaik untuk Anda</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto relative z-10">
+                    <div class="text-center p-8 rounded-3xl bg-white/80 backdrop-blur-lg hover:bg-white/90 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-purple-100/50 group hover:-translate-y-2">
+                        <div class="text-6xl mb-6 group-hover:animate-bounce">🎸</div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 group-hover:text-purple-600 transition-colors">Kualitas Terjamin</h3>
+                        <p class="text-gray-600 leading-relaxed">Semua produk telah melalui quality control ketat dan bergaransi resmi</p>
+                        <div class="mt-4 w-12 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mx-auto group-hover:w-16 transition-all duration-300"></div>
+                    </div>
+                    <div class="text-center p-8 rounded-3xl bg-white/80 backdrop-blur-lg hover:bg-white/90 hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-500 border border-green-100/50 group hover:-translate-y-2">
+                        <div class="text-6xl mb-6 group-hover:animate-bounce">🚚</div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 group-hover:text-green-600 transition-colors">Pengiriman Cepat</h3>
+                        <p class="text-gray-600 leading-relaxed">Pengiriman ke seluruh Indonesia dengan packaging aman dan asuransi</p>
+                        <div class="mt-4 w-12 h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mx-auto group-hover:w-16 transition-all duration-300"></div>
+                    </div>
+                    <div class="text-center p-8 rounded-3xl bg-white/80 backdrop-blur-lg hover:bg-white/90 hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-500 border border-orange-100/50 group hover:-translate-y-2">
+                        <div class="text-6xl mb-6 group-hover:animate-bounce">💬</div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 group-hover:text-orange-600 transition-colors">Customer Service</h3>
+                        <p class="text-gray-600 leading-relaxed">Tim support profesional yang siap membantu 24/7</p>
+                        <div class="mt-4 w-12 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mx-auto group-hover:w-16 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Produk Page -->
+    <div id="produk" class="page">
+        <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Produk Kami</h2>
+                    <p class="text-gray-600 text-lg max-w-2xl mx-auto">Pilihan terbaik alat musik berkualitas tinggi untuk semua kebutuhan musik Anda</p>
+                </div>
+                
+                <!-- Filter -->
+                <div class="flex justify-center mb-16">
+                    <div class="flex flex-wrap gap-3 bg-white/80 backdrop-blur-lg p-4 rounded-3xl shadow-2xl border border-purple-100/50">
+                        <button onclick="filterProducts('all')" class="filter-btn active px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-105 shadow-lg">✨ Semua</button>
+                        <button onclick="filterProducts('gitar')" class="filter-btn px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-105 shadow-lg">🎸 Gitar</button>
+                        <button onclick="filterProducts('keyboard')" class="filter-btn px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-105 shadow-lg">🎹 Keyboard</button>
+                        <button onclick="filterProducts('drum')" class="filter-btn px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-105 shadow-lg">🥁 Drum</button>
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Tentang Page -->
+    <div id="tentang" class="page">
+        <section class="py-20 bg-gradient-to-b from-purple-50 to-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Tentang MusicStore</h2>
+                    <p class="text-gray-600 text-lg max-w-2xl mx-auto">Mitra terpercaya untuk perjalanan musik Anda</p>
+                </div>
+                
+                <div class="max-w-4xl mx-auto">
+                    <!-- Story Section -->
+                    <div class="bg-white rounded-2xl shadow-lg p-8 mb-12">
+                        <div class="text-center mb-8">
+                            <div class="text-6xl mb-4">🎵</div>
+                            <h3 class="text-2xl font-bold mb-4 text-gray-800">Cerita Kami</h3>
+                        </div>
+                        <div class="prose prose-lg mx-auto text-gray-600 leading-relaxed">
+                            <p class="mb-6">
+                                MusicStore didirikan dengan visi sederhana namun mulia: membuat alat musik berkualitas tinggi 
+                                dapat diakses oleh semua kalangan di Indonesia. Sejak tahun 2015, kami telah melayani ribuan 
+                                musisi dari berbagai genre dan tingkat keahlian.
+                            </p>
+                            <p class="mb-6">
+                                Kami percaya bahwa musik adalah bahasa universal yang dapat menyatukan orang-orang dari 
+                                berbagai latar belakang. Oleh karena itu, kami berkomitmen untuk menyediakan instrumen 
+                                terbaik dengan harga yang terjangkau, disertai layanan pelanggan yang luar biasa.
+                            </p>
+                            <p>
+                                Tim kami terdiri dari musisi berpengalaman dan ahli teknis yang memahami kebutuhan setiap 
+                                pelanggan. Kami tidak hanya menjual alat musik, tetapi juga membantu Anda menemukan 
+                                instrumen yang tepat untuk mengekspresikan kreativitas musical Anda.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Features Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                        <div class="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all duration-300">
+                            <div class="text-4xl mb-4">🏆</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">Kualitas Premium</h3>
+                            <p class="text-gray-600">Hanya menjual produk dari brand ternama dengan standar internasional</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all duration-300">
+                            <div class="text-4xl mb-4">🛡️</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">Garansi Resmi</h3>
+                            <p class="text-gray-600">Semua produk dilengkapi garansi resmi dan layanan purna jual</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all duration-300">
+                            <div class="text-4xl mb-4">🚚</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">Pengiriman Aman</h3>
+                            <p class="text-gray-600">Packaging khusus dan asuransi untuk keamanan produk</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all duration-300">
+                            <div class="text-4xl mb-4">💰</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">Harga Kompetitif</h3>
+                            <p class="text-gray-600">Harga terbaik dengan kualitas yang tidak pernah berkompromi</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all duration-300">
+                            <div class="text-4xl mb-4">🎓</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">Konsultasi Gratis</h3>
+                            <p class="text-gray-600">Tim ahli siap membantu memilih instrumen yang tepat</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all duration-300">
+                            <div class="text-4xl mb-4">🌟</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">Kepuasan Pelanggan</h3>
+                            <p class="text-gray-600">Rating 4.9/5 dari ribuan review pelanggan yang puas</p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white text-center">
+                        <h3 class="text-2xl font-bold mb-4">Hubungi Kami</h3>
+                        <p class="mb-6 opacity-90">Punya pertanyaan? Tim customer service kami siap membantu Anda!</p>
+                        <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
+                            <a href="mailto:ridhaar2008@gmail.com" class="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl transition-all">
+                                <span>📧</span>
+                                <span>ridhaar2008@gmail.com</span>
+                            </a>
+                            <a href="https://wa.me/6282337088777" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl transition-all">
+                                <span>📱</span>
+                                <span>082337088777</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold">Keranjang Belanja</h3>
+                        <button onclick="toggleCart()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                    </div>
+                    <div id="cartItems" class="space-y-4 mb-6">
+                        <!-- Cart items will be displayed here -->
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xl font-bold">Total: </span>
+                            <span id="cartTotal" class="text-xl font-bold text-purple-600">Rp 0</span>
+                        </div>
+                        <button onclick="showCheckout()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                            Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-lg w-full max-h-screen overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b px-6 py-4 rounded-t-lg">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-2xl font-bold text-gray-800">📝 Form Pemesanan</h3>
+                        <button onclick="hideCheckout()" class="text-gray-400 hover:text-gray-600 text-3xl font-light transition-colors">&times;</button>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <form id="orderForm" class="space-y-5">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="customerName" class="block text-sm font-semibold text-gray-700 mb-2">👤 Nama Lengkap</label>
+                                <input type="text" id="customerName" required placeholder="Masukkan nama lengkap Anda" class="form-input w-full p-4 rounded-xl focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="customerEmail" class="block text-sm font-semibold text-gray-700 mb-2">📧 Email</label>
+                                <input type="email" id="customerEmail" required placeholder="contoh@email.com" class="form-input w-full p-4 rounded-xl focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="customerPhone" class="block text-sm font-semibold text-gray-700 mb-2">📱 No. Telepon</label>
+                                <input type="tel" id="customerPhone" required placeholder="08xxxxxxxxxx" class="form-input w-full p-4 rounded-xl focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="customerAddress" class="block text-sm font-semibold text-gray-700 mb-2">🏠 Alamat Lengkap</label>
+                                <textarea id="customerAddress" required rows="3" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota, Kode Pos" class="form-input w-full p-4 rounded-xl focus:outline-none resize-none"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-5 rounded-lg border border-purple-200">
+                            <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                                🛒 Ringkasan Pesanan
+                            </h4>
+                            <div id="orderSummary" class="text-sm space-y-2 mb-3"></div>
+                            <div class="border-t border-purple-200 pt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-bold text-gray-800">Total Pembayaran:</span>
+                                    <span id="orderTotal" class="text-xl font-bold text-purple-600"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3 pt-2">
+                            <button type="button" onclick="hideCheckout()" class="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                                Batal
+                            </button>
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg">
+                                ✅ Kirim Pesanan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full p-6 text-center">
+                <div class="text-6xl mb-4">✅</div>
+                <h3 class="text-2xl font-bold mb-4 text-green-600">Pesanan Berhasil!</h3>
+                <p class="text-gray-600 mb-6">Terima kasih! Pesanan Anda telah diterima dan akan segera diproses.</p>
+                <button onclick="hideSuccess()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="flex items-center space-x-3">
+            <div class="text-green-500 text-xl">✅</div>
+            <div>
+                <div class="font-semibold text-gray-800" id="toastTitle">Berhasil!</div>
+                <div class="text-sm text-gray-600" id="toastMessage">Produk ditambahkan ke keranjang</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <div class="text-2xl">🎵</div>
+                <h3 class="text-xl font-bold">MusicStore</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Wujudkan impian musik Anda bersama kami</p>
+            <div class="flex justify-center space-x-6 mb-6">
+                <a href="mailto:ridhaar2008@gmail.com" class="text-gray-400 hover:text-white transition-colors">📧 ridhaar2008@gmail.com</a>
+                <a href="https://wa.me/6282337088777" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-green-400 transition-colors">📱 082337088777</a>
+            </div>
+            <div class="border-t border-gray-700 pt-4">
+                <p class="text-gray-500 text-sm">© 2025 MusicStore. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Product data
+        const products = [
+            {
+                id: 1,
+                name: "Gitar Akustik Yamaha F310",
+                price: 1500000,
+                category: "gitar",
+                image: "https://i.imgur.com/0zpWEhG.jpg",
+                description: "Gitar akustik berkualitas tinggi untuk pemula dan profesional"
+            },
+            {
+                id: 2,
+                name: "Keyboard Casio CTK-3500",
+                price: 2200000,
+                category: "keyboard",
+                image: "https://i.pinimg.com/1200x/e6/10/26/e610267396d26890b3f2c65ac0dac063.jpg",
+                description: "Keyboard 61 keys dengan berbagai suara dan ritme"
+            },
+            {
+                id: 3,
+                name: "Drum Set Pearl Roadshow",
+                price: 8500000,
+                category: "drum",
+                image: "https://i.pinimg.com/736x/da/bc/8d/dabc8d30f553c16225a0d91ff7183024.jpg",
+                description: "Drum set lengkap 5 piece untuk semua level"
+            },
+            {
+                id: 4,
+                name: "Gitar Elektrik Fender Stratocaster",
+                price: 12000000,
+                category: "gitar",
+                image: "https://i.pinimg.com/736x/c2/70/32/c27032325f24ed82bb4ae5cc877c38e4.jpg",
+                description: "Gitar elektrik legendaris dengan suara yang ikonik"
+            },
+            {
+                id: 5,
+                name: "Piano Digital Yamaha P-45",
+                price: 7500000,
+                category: "keyboard",
+                image: "https://i.pinimg.com/1200x/87/f5/90/87f59072311cc8ddef64ea8083024bfe.jpg",
+                description: "Piano digital 88 keys dengan weighted action"
+            },
+            {
+                id: 6,
+                name: "Bass Elektrik Ibanez SR300E",
+                price: 4500000,
+                category: "gitar",
+                image: "https://i.pinimg.com/1200x/98/06/19/980619b1452b5721316c2ee3bc403799.jpg",
+                description: "Bass elektrik 4 senar dengan pickup aktif"
+            }
+        ];
+
+        let cart = [];
+        let currentFilter = 'all';
+        let currentPage = 'beranda';
+
+        // Navigation function
+        function navigateTo(page) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            // Show target page
+            document.getElementById(page).classList.add('active');
+            
+            // Update navigation active state
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Find and activate current nav link
+            const currentNavLink = document.querySelector(`a[href="#${page}"]`);
+            if (currentNavLink) {
+                currentNavLink.classList.add('active');
+            }
+            
+            currentPage = page;
+            
+            // Load products if navigating to products page
+            if (page === 'produk') {
+                displayProducts();
+            }
+            
+            // Start carousel if navigating to home
+            if (page === 'beranda') {
+                setTimeout(() => {
+                    startCarousel();
+                }, 100);
+            }
+            
+            // Update URL hash
+            window.location.hash = page;
+        }
+
+        // Handle browser back/forward
+        window.addEventListener('hashchange', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash && ['beranda', 'produk', 'tentang'].includes(hash)) {
+                navigateTo(hash);
+            }
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check URL hash on load
+            const hash = window.location.hash.substring(1);
+            if (hash && ['beranda', 'produk', 'tentang'].includes(hash)) {
+                navigateTo(hash);
+            } else {
+                navigateTo('beranda');
+            }
+            
+            updateCartUI();
+        });
+
+        // Display products
+        function displayProducts() {
+            const productGrid = document.getElementById('productGrid');
+            if (!productGrid) return;
+            
+            const filteredProducts = currentFilter === 'all' ? products : products.filter(p => p.category === currentFilter);
+            
+            productGrid.innerHTML = filteredProducts.map(product => `
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden group">
+                    <div class="h-72 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6 relative">
+                        <img src="${product.image}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-500" onerror="this.src=''; this.alt='Gambar tidak dapat dimuat'; this.style.display='none';">
+                        <div class="absolute top-4 right-4 bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">
+                            ${product.category.charAt(0).toUpperCase() + product.category.slice(1)}
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 text-gray-800 group-hover:text-purple-600 transition-colors">${product.name}</h3>
+                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">${product.description}</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                                Rp ${product.price.toLocaleString('id-ID')}
+                            </div>
+                            <div class="flex text-yellow-400">
+                                ⭐⭐⭐⭐⭐
+                            </div>
+                        </div>
+                        <button onclick="addToCart(${product.id})" class="w-full btn-primary text-white py-3 px-6 rounded-xl font-semibold flex items-center justify-center space-x-2">
+                            <span>🛒</span>
+                            <span>Tambah ke Keranjang</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter products
+        function filterProducts(category) {
+            currentFilter = category;
+            displayProducts();
+            
+            // Update filter button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-purple-600', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            
+            // Find the clicked button and activate it
+            const clickedBtn = event ? event.target : document.querySelector('.filter-btn');
+            if (clickedBtn) {
+                clickedBtn.classList.add('active', 'bg-purple-600', 'text-white');
+                clickedBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+            }
+        }
+
+        // Toast notification function
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            const icon = toast.querySelector('.text-green-500');
+            
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Change icon based on type
+            if (type === 'success') {
+                icon.textContent = '✅';
+                icon.className = 'text-green-500 text-xl';
+                toast.style.borderLeftColor = '#10b981';
+            } else if (type === 'error') {
+                icon.textContent = '❌';
+                icon.className = 'text-red-500 text-xl';
+                toast.style.borderLeftColor = '#ef4444';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Add to cart
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+                showToast('Ditambahkan!', `${product.name} (${existingItem.quantity}x) di keranjang`);
+            } else {
+                cart.push({...product, quantity: 1});
+                showToast('Berhasil!', `${product.name} ditambahkan ke keranjang`);
+            }
+            
+            updateCartUI();
+            
+            // Show animation
+            const cartCount = document.getElementById('cartCount');
+            cartCount.classList.add('cart-badge');
+            setTimeout(() => cartCount.classList.remove('cart-badge'), 500);
+        }
+
+        // Update cart UI
+        function updateCartUI() {
+            const cartCount = document.getElementById('cartCount');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            if (totalItems > 0) {
+                cartCount.textContent = totalItems;
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
+            
+            updateCartModal();
+        }
+
+        // Update cart modal
+        function updateCartModal() {
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-500 text-center py-8">Keranjang kosong</p>';
+                cartTotal.textContent = 'Rp 0';
+                return;
+            }
+            
+            cartItems.innerHTML = cart.map(item => `
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <img src="${item.image}" alt="${item.name}" class="w-12 h-12 object-cover rounded" onerror="this.style.display='none';">
+                        <div>
+                            <h4 class="font-semibold">${item.name}</h4>
+                            <p class="text-gray-600">Rp ${item.price.toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateQuantity(${item.id}, -1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300">-</button>
+                        <span class="w-8 text-center">${item.quantity}</span>
+                        <button onclick="updateQuantity(${item.id}, 1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300">+</button>
+                        <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 ml-2">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            cartTotal.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        // Update quantity
+        function updateQuantity(productId, change) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    updateCartUI();
+                }
+            }
+        }
+
+        // Remove from cart
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartUI();
+        }
+
+        // Toggle cart modal
+        function toggleCart() {
+            const cartModal = document.getElementById('cartModal');
+            cartModal.classList.toggle('hidden');
+        }
+
+        // Show checkout
+        function showCheckout() {
+            if (cart.length === 0) {
+                showToast('Keranjang Kosong!', 'Tambahkan produk ke keranjang terlebih dahulu', 'error');
+                return;
+            }
+            
+            document.getElementById('cartModal').classList.add('hidden');
+            document.getElementById('checkoutModal').classList.remove('hidden');
+            
+            // Update order summary
+            const orderSummary = document.getElementById('orderSummary');
+            const orderTotal = document.getElementById('orderTotal');
+            
+            orderSummary.innerHTML = cart.map(item => `
+                <div class="flex justify-between">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span>Rp ${(item.price * item.quantity).toLocaleString('id-ID')}</span>
+                </div>
+            `).join('');
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            orderTotal.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        // Hide checkout
+        function hideCheckout() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+        }
+
+        // WhatsApp API Configuration
+        const WA_API_TOKEN = 'ykGETja34TJmfLYH2MPJ';
+        const WA_API_URL = 'https://api.fonnte.com/send';
+        const ADMIN_PHONE = '6282337088777'; // Admin phone number
+
+        // Function to send WhatsApp message
+        async function sendWhatsAppMessage(phone, message) {
+            try {
+                const response = await fetch(WA_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': WA_API_TOKEN,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        target: phone,
+                        message: message,
+                        countryCode: '62'
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('WhatsApp API Response:', result);
+                return result;
+            } catch (error) {
+                console.error('Error sending WhatsApp:', error);
+                return null;
+            }
+        }
+
+        // Function to format phone number
+        function formatPhoneNumber(phone) {
+            // Remove all non-numeric characters
+            let cleaned = phone.replace(/\D/g, '');
+            
+            // If starts with 0, replace with 62
+            if (cleaned.startsWith('0')) {
+                cleaned = '62' + cleaned.substring(1);
+            }
+            // If doesn't start with 62, add it
+            else if (!cleaned.startsWith('62')) {
+                cleaned = '62' + cleaned;
+            }
+            
+            return cleaned;
+        }
+
+        // Handle form submission
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validasi form
+            const name = document.getElementById('customerName').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+            
+            if (!name || !email || !phone || !address) {
+                showToast('Oops!', 'Mohon lengkapi semua data terlebih dahulu', 'error');
+                return;
+            }
+            
+            if (cart.length === 0) {
+                showToast('Keranjang Kosong!', 'Tambahkan produk ke keranjang terlebih dahulu', 'error');
+                return;
+            }
+            
+            // Tampilkan loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '⏳ Mengirim pesanan...';
+            submitBtn.disabled = true;
+            
+            // Generate order ID
+            const orderId = 'MS' + new Date().getTime().toString().slice(-8);
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Siapkan data untuk dikirim
+            const orderData = {
+                orderId: orderId,
+                name: name,
+                email: email,
+                phone: phone,
+                address: address,
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                timestamp: timestamp
+            };
+            
+            console.log('📤 Mengirim data:', orderData);
+            
+            // Format phone numbers
+            const customerPhone = formatPhoneNumber(phone);
+            
+            // Prepare WhatsApp messages
+            const itemsList = cart.map(item => 
+                `• ${item.name} x${item.quantity} - Rp ${(item.price * item.quantity).toLocaleString('id-ID')}`
+            ).join('\n');
+            
+            // Customer message
+            const customerMessage = `🎵 *MUSICSTORE - Konfirmasi Pesanan*
+
+Halo ${name}! 👋
+
+Terima kasih telah berbelanja di MusicStore. Pesanan Anda telah kami terima:
+
+📋 *Detail Pesanan:*
+🆔 ID Pesanan: ${orderId}
+📅 Tanggal: ${timestamp}
+
+🛍️ *Produk yang Dipesan:*
+${itemsList}
+
+💰 *Total Pembayaran: Rp ${orderData.total.toLocaleString('id-ID')}*
+
+📍 *Alamat Pengiriman:*
+${address}
+
+✅ Status: Pesanan sedang diproses
+⏰ Estimasi: 1-3 hari kerja
+
+Tim kami akan segera menghubungi Anda untuk konfirmasi pembayaran dan pengiriman.
+
+Terima kasih telah mempercayai MusicStore! 🎶
+
+---
+MusicStore - Wujudkan Impian Musik Anda
+📱 WA: 082337088777
+📧 Email: ridhaar2008@gmail.com`;
+
+            // Admin message
+            const adminMessage = `🚨 *PESANAN BARU MASUK!*
+
+📋 *Detail Pesanan:*
+🆔 ID: ${orderId}
+📅 Waktu: ${timestamp}
+
+👤 *Data Customer:*
+• Nama: ${name}
+• Email: ${email}
+• Phone: ${phone}
+• Alamat: ${address}
+
+🛍️ *Produk Dipesan:*
+${itemsList}
+
+💰 *Total: Rp ${orderData.total.toLocaleString('id-ID')}*
+
+⚡ *ACTION REQUIRED:*
+Segera hubungi customer untuk konfirmasi pembayaran!
+
+---
+MusicStore Admin Panel`;
+            
+            // Send to Google Sheets first
+            fetch('https://script.google.com/macros/s/AKfycbyXWw1p4Paz10dWp56s9AKCsqVXDPLSZIpwAleAw2ojsWsfHgfmc1qOUzutOYRQEplb/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(() => {
+                console.log('✅ Data berhasil dikirim ke Google Sheets');
+                
+                // Send WhatsApp notifications
+                Promise.all([
+                    sendWhatsAppMessage(customerPhone, customerMessage),
+                    sendWhatsAppMessage(ADMIN_PHONE, adminMessage)
+                ]).then(results => {
+                    console.log('📱 WhatsApp notifications sent:', results);
+                    
+                    // Update success message
+                    const successModal = document.getElementById('successModal');
+                    const messageElement = successModal.querySelector('p');
+                    messageElement.innerHTML = `
+                        Terima kasih <strong>${name}</strong>! 🎉<br>
+                        Pesanan Anda telah diterima.<br>
+                        <strong>ID Pesanan: ${orderId}</strong><br>
+                        <br>
+                        📱 <strong>Notifikasi WhatsApp telah dikirim!</strong><br>
+                        <small>Cek WhatsApp Anda untuk detail pesanan</small>
+                    `;
+                    
+                    showToast('Berhasil!', 'Pesanan dikirim & notifikasi WhatsApp terkirim! 📱');
+                }).catch(error => {
+                    console.error('❌ Error sending WhatsApp:', error);
+                    
+                    // Still show success but mention WhatsApp issue
+                    const successModal = document.getElementById('successModal');
+                    const messageElement = successModal.querySelector('p');
+                    messageElement.innerHTML = `
+                        Terima kasih <strong>${name}</strong>!<br>
+                        Pesanan Anda telah diterima.<br>
+                        <strong>ID Pesanan: ${orderId}</strong><br>
+                        <br>
+                        <small>⚠️ Notifikasi WhatsApp sedang diproses</small>
+                    `;
+                    
+                    showToast('Pesanan Diterima!', 'Data tersimpan, notifikasi WhatsApp menyusul');
+                });
+                
+                // Show success modal
+                document.getElementById('checkoutModal').classList.add('hidden');
+                document.getElementById('successModal').classList.remove('hidden');
+                
+                // Clear cart dan reset form
+                cart = [];
+                updateCartUI();
+                document.getElementById('orderForm').reset();
+                
+            })
+            .catch(error => {
+                console.error('❌ Error mengirim data:', error);
+                
+                // Fallback: still try to send WhatsApp
+                Promise.all([
+                    sendWhatsAppMessage(customerPhone, customerMessage),
+                    sendWhatsAppMessage(ADMIN_PHONE, adminMessage)
+                ]).then(() => {
+                    showToast('Berhasil!', 'Pesanan diterima & notifikasi WhatsApp terkirim! 📱');
+                }).catch(() => {
+                    showToast('Pesanan Diterima!', 'Sistem sedang memproses pesanan Anda');
+                });
+                
+                const successModal = document.getElementById('successModal');
+                const messageElement = successModal.querySelector('p');
+                messageElement.innerHTML = `
+                    Terima kasih <strong>${name}</strong>!<br>
+                    Pesanan Anda sedang diproses.<br>
+                    <strong>ID Pesanan: ${orderId}</strong><br>
+                    <small>Tim kami akan segera menghubungi Anda</small>
+                `;
+                
+                document.getElementById('checkoutModal').classList.add('hidden');
+                document.getElementById('successModal').classList.remove('hidden');
+                
+                cart = [];
+                updateCartUI();
+                document.getElementById('orderForm').reset();
+            })
+            .finally(() => {
+                // Kembalikan tombol ke kondisi normal
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        // Hide success modal
+        function hideSuccess() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        // Carousel functionality
+        let currentSlide = 0;
+        let carouselInterval;
+
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            if (slides.length === 0) return;
+            
+            // Hide all slides
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active', 'prev');
+                if (i < index) {
+                    slide.classList.add('prev');
+                }
+            });
+            
+            // Show current slide
+            slides[index].classList.add('active');
+            
+            // Update dots
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            
+            // Change background based on slide with professional gradients
+            const heroSection = document.querySelector('#beranda section');
+            if (heroSection) {
+                const backgrounds = [
+                    // Slide 1: Professional purple gradient
+                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    // Slide 2: Modern coral gradient  
+                    'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                    // Slide 3: Clean blue gradient
+                    'linear-gradient(135deg, #3742fa 0%, #2f3542 100%)'
+                ];
+                
+                heroSection.style.background = backgrounds[index];
+            }
+            
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            if (slides.length === 0) return;
+            
+            const next = (currentSlide + 1) % slides.length;
+            showSlide(next);
+        }
+
+        function prevSlide() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            if (slides.length === 0) return;
+            
+            const prev = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(prev);
+        }
+
+        function changeSlide(index) {
+            showSlide(index);
+            resetCarouselTimer();
+        }
+
+        function startCarousel() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            if (slides.length === 0) return;
+            
+            clearInterval(carouselInterval);
+            carouselInterval = setInterval(nextSlide, 5000); // Auto-slide every 5 seconds
+        }
+
+        function resetCarouselTimer() {
+            clearInterval(carouselInterval);
+            startCarousel();
+        }
+
+        // Pause carousel on hover
+        document.addEventListener('DOMContentLoaded', function() {
+            const heroSection = document.querySelector('#beranda section');
+            if (heroSection) {
+                heroSection.addEventListener('mouseenter', () => {
+                    clearInterval(carouselInterval);
+                });
+
+                heroSection.addEventListener('mouseleave', () => {
+                    startCarousel();
+                });
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a03690c86f3b5be',t:'MTc2MzQyNjM2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
